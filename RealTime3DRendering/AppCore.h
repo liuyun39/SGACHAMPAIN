@@ -20,14 +20,13 @@
 #define NOBITMAP                // Disable GDI bitmap support
 
 #define NOMINMAX                // MOST IMPORTANT! Disable Windows min/max macros to avoid conflict with std::min/max
-#define NOGDI                   // Disable entire GDI (2D CPU Graphics) - Games use DirectX
-#define NOUSER                  // Disable legacy USER module APIs (Buttons, Menus, etc.)
+//#define NOGDI                   // Disable entire GDI (2D CPU Graphics) - Games use DirectX
 #define NOWINOFFSETS            // Disable legacy window offset structures
 #define NOCOMM                  // Disable serial comms support
 #define NOKANJI                 // Disable Kanji support for legacy systems
 #define NOHELP                  // Disable Windows Help system
 #define NOPROFILER              // Disable system profiler support
-#define NODEFERWINDOWPOS        // Disable legacy window positioning functions
+#define NODEFERWINDOWPOS        // Disable legacy window positioning functionss
 #define NOMCX                   // Disable modem and device control
 
 // ==============================

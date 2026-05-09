@@ -1,5 +1,5 @@
 #pragma once
-#include <Windows.h>
+#include "AppCore.h"
 #include <unordered_map>
 #include <string>
 class WindowsMessageMap

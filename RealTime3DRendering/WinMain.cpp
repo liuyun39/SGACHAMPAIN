@@ -1,4 +1,4 @@
-#include <Windows.h>
+#include "AppCore.h"
 #include "WindowsMessageMap.h"
 #include <sstream>
 
