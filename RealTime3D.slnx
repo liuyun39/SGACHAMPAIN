@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="RealTime3DRendering/RealTime3DRendering.vcxproj" Id="7c6f42ac-1254-45e7-8a82-0c38879d0c93" />
+</Solution>
