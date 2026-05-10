@@ -20,8 +20,6 @@
 #define NOBITMAP                // Disable GDI bitmap support
 
 #define NOMINMAX                // MOST IMPORTANT! Disable Windows min/max macros to avoid conflict with std::min/max
-//#define NOGDI                   // Disable entire GDI (2D CPU Graphics) - Games use DirectX
-#define NOWINOFFSETS            // Disable legacy window offset structures
 #define NOCOMM                  // Disable serial comms support
 #define NOKANJI                 // Disable Kanji support for legacy systems
 #define NOHELP                  // Disable Windows Help system
@@ -33,8 +31,8 @@
 // 3. Safety & Encoding Settings
 // ==============================
 #define STRICT                  // Enable strict type-checking for HWND/HDC handles
-#define UNICODE                 // Use Unicode (Wide Char) Windows API
-#define _UNICODE                // Use Unicode C Runtime Library
+//#define UNICODE                 // Use Unicode (Wide Char) Windows API
+//#define _UNICODE                // Use Unicode C Runtime Library
 #define NOICONS                 // Disable legacy icon APIs
 
 // ==============================
