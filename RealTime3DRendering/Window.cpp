@@ -1,9 +1,12 @@
 #include "Window.h"
 #include "WindowsMessageMap.h"
 #include <sstream>
+#include "resource.h"
+#include "utils.h"
 
 // Window Stuff
-Window::Window(int width, int height, const WCHAR* name) noexcept
+Window::Window(int width, int height, const WCHAR* name):
+		width(width), height(height)
 {
 		// calculate window size based on desired client region size
 		RECT wr;
@@ -11,7 +14,11 @@ Window::Window(int width, int height, const WCHAR* name) noexcept
 		wr.right = wr.left + width;
 		wr.top = 100;
 		wr.bottom = wr.top + height;
-		AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
+		if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE) == 0)
+		{
+				throw WND_LAST_EXCEPT();
+		}
+		
 		// create the window & get hWnd
 		hWnd = CreateWindow(
 				WindowClass::GetName(), name,
@@ -19,6 +26,11 @@ Window::Window(int width, int height, const WCHAR* name) noexcept
 				CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
 				nullptr, nullptr, WindowClass::GetInstance(), this
 		);
+		// check for error
+		if (hWnd == nullptr)
+		{
+				throw WND_LAST_EXCEPT();
+		}
 		// show window
 		ShowWindow(hWnd, SW_SHOWDEFAULT);
 }
@@ -26,6 +38,14 @@ Window::Window(int width, int height, const WCHAR* name) noexcept
 Window::~Window()
 {
 	DestroyWindow(hWnd);
+}
+
+void Window::SetTitle(const std::string& title)
+{
+		if(SetWindowText(hWnd, Utf8ToWide(title.c_str()).c_str()) == 0)
+		{
+				throw WND_LAST_EXCEPT();
+		}
 }
 
 LRESULT WINAPI Window::HandleMsgSetup(
@@ -65,35 +85,97 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		OutputDebugString(messageMap(msg, lParam, wParam).c_str());
 		switch (msg)
 		{
-		case WM_CLOSE:
-				PostQuitMessage(69);
-				break;
-		case WM_KEYDOWN:
-				if (wParam == 'F')
+				case WM_CLOSE:
+						PostQuitMessage(69);
+						break;
+				// clear keystate when window loses focus to prevent input getting "stuck"
+				case WM_KILLFOCUS:
+						kbd.ClearState();
+						break;
+				/********************* KEYBOARD MESSAGES *********************/
+				case WM_KEYDOWN:
+				case WM_SYSKEYDOWN:
+						if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled())
+						{
+								kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
+						}
+						break;
+				case WM_KEYUP:
+				case WM_SYSKEYUP:
+						kbd.OnKeyReleased(static_cast<unsigned char>(wParam));
+						break;
+				case WM_CHAR:
+						kbd.OnChar(static_cast<unsigned char>(wParam));
+						break;
+				/********************* END KEYBOARD MESSAGES *********************/
+
+				/********************* MOUSE MESSAGES *********************/
+				case WM_MOUSEMOVE:
 				{
-						SetWindowText(hWnd, L"Respects");
+						const POINTS pt = MAKEPOINTS(lParam);
+						// in client region -> log move, and log enter + update isInWindow
+						if(pt.x >=0 && pt.x < width && pt.y >= 0 && pt.y < height)
+						{
+								mouse.OnMouseMove(pt.x, pt.y);
+								if (!mouse.IsInWindow())
+								{
+										SetCapture(hWnd);
+										mouse.OnMouseEnter();
+								}
+						}
+						// not in client region -> log move, and log leave + update isInWindow
+						else
+						{
+								if (wParam & (MK_LBUTTON | MK_RBUTTON))
+								{
+										mouse.OnMouseMove(pt.x, pt.y);
+								}
+								// button up -> release capture / log leave for leaving
+								else
+								{
+										ReleaseCapture();
+										mouse.OnMouseLeave();
+								}
+						}
+						break;
 				}
-				break;
-		case WM_KEYUP:
-				if (wParam == 'F')
+				case WM_LBUTTONDOWN:
 				{
-						SetWindowText(hWnd, L"Real Time 3D Rendering");
+						const POINTS pt = MAKEPOINTS(lParam);
+						mouse.OnLeftPressed(pt.x, pt.y);
+						break;
 				}
-				break;
-		case WM_CHAR:
-		{
-				static std::wstring title;
-				title.push_back((char)wParam);
-				SetWindowText(hWnd, title.c_str());
-				break;
+				case WM_LBUTTONUP:
+				{
+						const POINTS pt = MAKEPOINTS(lParam);
+						mouse.OnLeftReleased(pt.x, pt.y);
+						break;
+				}
+				case WM_RBUTTONDOWN:
+				{
+						const POINTS pt = MAKEPOINTS(lParam);
+						mouse.OnRightPressed(pt.x, pt.y);
+						break;
+				}
+				case WM_RBUTTONUP:
+				{
+						const POINTS pt = MAKEPOINTS(lParam);
+						mouse.OnRightReleased(pt.x, pt.y);
+						break;
+				}
+				case WM_MOUSEWHEEL:
+				{
+						const POINTS pt = MAKEPOINTS(lParam);
+						const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+						mouse.OnWheelDelta(pt.x, pt.y, delta);
+						break;
+				}
+				/********************* END MOUSE MESSAGES *********************/
+
 		}
-		case WM_LBUTTONDOWN:
-				POINTS pt = MAKEPOINTS(lParam);
-				std::wstringstream ss;
-				ss << L"X=" << pt.x << L" Y=" << pt.y;
-				SetWindowText(hWnd, ss.str().c_str());
-				break;
-		}
+
+
+	
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 };
 
@@ -111,12 +193,12 @@ Window::WindowClass::WindowClass() noexcept
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = GetInstance();
-	wc.hIcon = nullptr;
+	wc.hIcon = static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR));
 	wc.hCursor = nullptr;
 	wc.hbrBackground = nullptr;
 	wc.lpszMenuName = nullptr;
 	wc.lpszClassName = GetName();
-	wc.hIconSm = nullptr;
+	wc.hIconSm = static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));;
 	RegisterClassEx(&wc);
 }
 
@@ -133,4 +215,53 @@ const wchar_t* Window::WindowClass::GetName() noexcept
 HINSTANCE Window::WindowClass::GetInstance() noexcept
 {
 	return wndClass.hInst;
+}
+
+// Window Exception Stuff
+Window::Exception::Exception(int line, const char* file, HRESULT hr) noexcept
+	: LYException(line, file), hr(hr)
+{}
+
+const char* Window::Exception::what() const noexcept
+{
+	std::ostringstream oss;
+	oss << GetType() << std::endl
+			<< "[Error Code] " << GetErrorCode() << std::endl
+			<< "[Description] " << GetErrorString() << std::endl
+			<< GetOriginString();
+	whatBuffer = oss.str();
+	return whatBuffer.c_str();
+}
+
+const char* Window::Exception::GetType() const noexcept
+{
+	return "LYException";
+}
+
+std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
+{
+	char* pMsgBuf = nullptr;
+	DWORD nMsgLen = FormatMessage(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(wchar_t*)reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
+	);
+	if (nMsgLen == 0)
+	{
+		return "Unidentified error code";
+	}
+	std::string errorString = pMsgBuf;
+	LocalFree(pMsgBuf);
+	return errorString;
+}
+
+HRESULT Window::Exception::GetErrorCode() const noexcept
+{
+	return hr;
+}
+
+std::string Window::Exception::GetErrorString() const noexcept
+{
+	return TranslateErrorCode(hr);
 }

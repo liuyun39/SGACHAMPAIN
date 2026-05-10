@@ -31,9 +31,6 @@
 // 3. Safety & Encoding Settings
 // ==============================
 #define STRICT                  // Enable strict type-checking for HWND/HDC handles
-//#define UNICODE                 // Use Unicode (Wide Char) Windows API
-//#define _UNICODE                // Use Unicode C Runtime Library
-#define NOICONS                 // Disable legacy icon APIs
 
 // ==============================
 // 4. Include Main Windows Header
