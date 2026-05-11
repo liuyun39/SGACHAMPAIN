@@ -7,7 +7,6 @@
 *.userosscache
 *.sln.docstates
 *.natvis
-*.filters
 *.vcxproj.user
 
 # ==============================
