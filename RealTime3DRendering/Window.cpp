@@ -6,33 +6,35 @@
 
 // Window Stuff
 Window::Window(int width, int height, const WCHAR* name):
-		width(width), height(height)
+	width(width), height(height)
 {
-		// calculate window size based on desired client region size
-		RECT wr;
-		wr.left = 100;
-		wr.right = wr.left + width;
-		wr.top = 100;
-		wr.bottom = wr.top + height;
-		if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE) == 0)
-		{
-				throw WND_LAST_EXCEPT();
-		}
+	// calculate window size based on desired client region size
+	RECT wr;
+	wr.left = 100;
+	wr.right = wr.left + width;
+	wr.top = 100;
+	wr.bottom = wr.top + height;
+	if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE) == 0)
+	{
+			throw WND_LAST_EXCEPT();
+	}
 		
-		// create the window & get hWnd
-		hWnd = CreateWindow(
-				WindowClass::GetName(), name,
-				WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-				CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
-				nullptr, nullptr, WindowClass::GetInstance(), this
-		);
-		// check for error
-		if (hWnd == nullptr)
-		{
-				throw WND_LAST_EXCEPT();
-		}
-		// show window
-		ShowWindow(hWnd, SW_SHOWDEFAULT);
+	// create the window & get hWnd
+	hWnd = CreateWindow(
+			WindowClass::GetName(), name,
+			WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+			CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
+			nullptr, nullptr, WindowClass::GetInstance(), this
+	);
+	// check for error
+	if (hWnd == nullptr)
+	{
+			throw WND_LAST_EXCEPT();
+	}
+	// newly created  windows start off as hidden
+	ShowWindow(hWnd, SW_SHOWDEFAULT);
+	// create graphics object
+	pGfx = std::make_unique<Graphics>(hWnd);
 }
 
 Window::~Window()
@@ -67,135 +69,137 @@ std::optional<int> Window::ProcessMessages() {
 	return {};
 }
 
+Graphics& Window::Gfx()
+{
+	return *pGfx;
+}
+
 LRESULT WINAPI Window::HandleMsgSetup(
-		HWND hwnd,
-		UINT msg,
-		WPARAM wParam,
-		LPARAM lParam
+	HWND hwnd,
+	UINT msg,
+	WPARAM wParam,
+	LPARAM lParam
 ) noexcept
 {
-		if (msg == WM_NCCREATE)
-		{
-				// extract ptr to window class from creation data
-				const CREATESTRUCTW* const pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam);
-				Window* const pWnd = static_cast<Window*>(pCreate->lpCreateParams);
-				// set WinAPI-managed user data to store ptr to window class
-				SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pWnd));
-				// set message proc to normal (non-setup) handler now that setup is finished
-				SetWindowLongPtr(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&Window::HandleMsgThunk));
-				// forward message to window class handler only msg == WM_NCCREATE callback
-				return pWnd->HandleMsg(hwnd, msg, wParam, lParam);
-		}
-		// if we get a message before the WM_NCCREATE message, handle with default handler
-		return DefWindowProc(hwnd, msg, wParam, lParam);
+	if (msg == WM_NCCREATE)
+	{
+		// extract ptr to window class from creation data
+		const CREATESTRUCTW* const pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam);
+		Window* const pWnd = static_cast<Window*>(pCreate->lpCreateParams);
+		// set WinAPI-managed user data to store ptr to window class
+		SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pWnd));
+		// set message proc to normal (non-setup) handler now that setup is finished
+		SetWindowLongPtr(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&Window::HandleMsgThunk));
+		// forward message to window class handler only msg == WM_NCCREATE callback
+		return pWnd->HandleMsg(hwnd, msg, wParam, lParam);
+	}
+	// if we get a message before the WM_NCCREATE message, handle with default handler
+	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 LRESULT WINAPI Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
-		// retrieve ptr to window class
-		Window* const pWnd = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-		// forward message to window class handler
-		return pWnd->HandleMsg(hWnd, msg, wParam, lParam);
+	// retrieve ptr to window class
+	Window* const pWnd = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	// forward message to window class handler
+	return pWnd->HandleMsg(hWnd, msg, wParam, lParam);
 };
 
 LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
-		static WindowsMessageMap messageMap;
-		OutputDebugString(messageMap(msg, lParam, wParam).c_str());
-		switch (msg)
+	static WindowsMessageMap messageMap;
+	OutputDebugString(messageMap(msg, lParam, wParam).c_str());
+	switch (msg)
+	{
+		case WM_CLOSE:
+				PostQuitMessage(69);
+				break;
+		// clear keystate when window loses focus to prevent input getting "stuck"
+		case WM_KILLFOCUS:
+				kbd.ClearState();
+				break;
+		/********************* KEYBOARD MESSAGES *********************/
+		case WM_KEYDOWN:
+		case WM_SYSKEYDOWN:
+				if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled())
+				{
+						kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
+				}
+				break;
+		case WM_KEYUP:
+		case WM_SYSKEYUP:
+				kbd.OnKeyReleased(static_cast<unsigned char>(wParam));
+				break;
+		case WM_CHAR:
+				kbd.OnChar(static_cast<unsigned char>(wParam));
+				break;
+		/********************* END KEYBOARD MESSAGES *********************/
+
+		/********************* MOUSE MESSAGES *********************/
+		case WM_MOUSEMOVE:
 		{
-				case WM_CLOSE:
-						PostQuitMessage(69);
-						break;
-				// clear keystate when window loses focus to prevent input getting "stuck"
-				case WM_KILLFOCUS:
-						kbd.ClearState();
-						break;
-				/********************* KEYBOARD MESSAGES *********************/
-				case WM_KEYDOWN:
-				case WM_SYSKEYDOWN:
-						if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled())
-						{
-								kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
-						}
-						break;
-				case WM_KEYUP:
-				case WM_SYSKEYUP:
-						kbd.OnKeyReleased(static_cast<unsigned char>(wParam));
-						break;
-				case WM_CHAR:
-						kbd.OnChar(static_cast<unsigned char>(wParam));
-						break;
-				/********************* END KEYBOARD MESSAGES *********************/
-
-				/********************* MOUSE MESSAGES *********************/
-				case WM_MOUSEMOVE:
+			const POINTS pt = MAKEPOINTS(lParam);
+			// in client region -> log move, and log enter + update isInWindow
+			if(pt.x >=0 && pt.x < width && pt.y >= 0 && pt.y < height)
+			{
+				mouse.OnMouseMove(pt.x, pt.y);
+				if (!mouse.IsInWindow())
 				{
-						const POINTS pt = MAKEPOINTS(lParam);
-						// in client region -> log move, and log enter + update isInWindow
-						if(pt.x >=0 && pt.x < width && pt.y >= 0 && pt.y < height)
-						{
-								mouse.OnMouseMove(pt.x, pt.y);
-								if (!mouse.IsInWindow())
-								{
-										SetCapture(hWnd);
-										mouse.OnMouseEnter();
-								}
-						}
-						// not in client region -> log move, and log leave + update isInWindow
-						else
-						{
-								if (wParam & (MK_LBUTTON | MK_RBUTTON))
-								{
-										mouse.OnMouseMove(pt.x, pt.y);
-								}
-								// button up -> release capture / log leave for leaving
-								else
-								{
-										ReleaseCapture();
-										mouse.OnMouseLeave();
-								}
-						}
-						break;
+					SetCapture(hWnd);
+					mouse.OnMouseEnter();
 				}
-				case WM_LBUTTONDOWN:
+			}
+			// not in client region -> log move, and log leave + update isInWindow
+			else
+			{
+				if (wParam & (MK_LBUTTON | MK_RBUTTON))
 				{
-						const POINTS pt = MAKEPOINTS(lParam);
-						mouse.OnLeftPressed(pt.x, pt.y);
-						break;
+					mouse.OnMouseMove(pt.x, pt.y);
 				}
-				case WM_LBUTTONUP:
+				// button up -> release capture / log leave for leaving
+				else
 				{
-						const POINTS pt = MAKEPOINTS(lParam);
-						mouse.OnLeftReleased(pt.x, pt.y);
-						break;
+					ReleaseCapture();
+					mouse.OnMouseLeave();
 				}
-				case WM_RBUTTONDOWN:
-				{
-						const POINTS pt = MAKEPOINTS(lParam);
-						mouse.OnRightPressed(pt.x, pt.y);
-						break;
-				}
-				case WM_RBUTTONUP:
-				{
-						const POINTS pt = MAKEPOINTS(lParam);
-						mouse.OnRightReleased(pt.x, pt.y);
-						break;
-				}
-				case WM_MOUSEWHEEL:
-				{
-						const POINTS pt = MAKEPOINTS(lParam);
-						const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
-						mouse.OnWheelDelta(pt.x, pt.y, delta);
-						break;
-				}
-				/********************* END MOUSE MESSAGES *********************/
-
+			}
+			break;
 		}
+		case WM_LBUTTONDOWN:
+		{
+			const POINTS pt = MAKEPOINTS(lParam);
+			mouse.OnLeftPressed(pt.x, pt.y);
+			break;
+		}
+		case WM_LBUTTONUP:
+		{
+			const POINTS pt = MAKEPOINTS(lParam);
+			mouse.OnLeftReleased(pt.x, pt.y);
+			break;
+		}
+		case WM_RBUTTONDOWN:
+		{
+			const POINTS pt = MAKEPOINTS(lParam);
+			mouse.OnRightPressed(pt.x, pt.y);
+			break;
+		}
+		case WM_RBUTTONUP:
+		{
+			const POINTS pt = MAKEPOINTS(lParam);
+			mouse.OnRightReleased(pt.x, pt.y);
+			break;
+		}
+		case WM_MOUSEWHEEL:
+		{
+			const POINTS pt = MAKEPOINTS(lParam);
+			const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+			mouse.OnWheelDelta(pt.x, pt.y, delta);
+			break;
+		}
+		/********************* END MOUSE MESSAGES *********************/
 
-
-	
-		return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+	return DefWindowProc(hWnd, msg, wParam, lParam);
 };
 
 
