@@ -11,15 +11,26 @@ class Window
 public:
 	class Exception : public LYException
 	{
+		using LYException::LYException;
 	public:
-			Exception(int line, const char* file, HRESULT hr) noexcept;
-			const char* what() const noexcept override;
-			virtual const char* GetType() const noexcept override;
-			static std::string TranslateErrorCode(HRESULT hr) noexcept;
-			HRESULT GetErrorCode() const noexcept;
-			std::string GetErrorString() const noexcept;
+		static std::string TranslateErrorCode(HRESULT hr) noexcept;
+	};
+	class HrException : public Exception
+	{
+	public:
+		HrException(int line, const char* file, HRESULT hr) noexcept;
+		const char* what() const noexcept override;
+		const char* GetType() const noexcept override;
+		HRESULT GetErrorCode() const noexcept;
+		std::string GetErrorDescription() const noexcept;
 	private:
-			HRESULT hr;
+		HRESULT hr;
+	};
+	class NoGfxException : public Exception
+	{
+	public:
+		using Exception::Exception;
+		const char* GetType() const noexcept override;
 	};
 private:
 	class WindowClass
@@ -60,5 +71,9 @@ private:
 
 
 // error exception helper macro
-#define WND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr)
-#define WND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, GetLastError())
+#define WND_EXCEPT(hr) Window::HrException(__LINE__, __FILE__, hr)
+#define WND_LAST_EXCEPT() Window::HrException(__LINE__, __FILE__, GetLastError())
+#define WND_NOGFX_EXCEPT() Window::NoGfxException(__LINE__, __FILE__)
+
+#define GFX_EXCEPT_NOINFO(hr) Graphics::HrException( __LINE__,__FILE__,(hr) )
+#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw Graphics::HrException( __LINE__,__FILE__,hr )

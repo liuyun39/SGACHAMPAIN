@@ -3,9 +3,10 @@
 #include <sstream>
 #include "resource.h"
 #include "utils.h"
+#include "dxerr.h"
 
 // Window Stuff
-Window::Window(int width, int height, const WCHAR* name):
+Window::Window(int width, int height, const WCHAR* name) :
 	width(width), height(height)
 {
 	// calculate window size based on desired client region size
@@ -16,44 +17,44 @@ Window::Window(int width, int height, const WCHAR* name):
 	wr.bottom = wr.top + height;
 	if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE) == 0)
 	{
-			throw WND_LAST_EXCEPT();
+		throw WND_LAST_EXCEPT();
 	}
-		
+
 	// create the window & get hWnd
 	hWnd = CreateWindow(
-			WindowClass::GetName(), name,
-			WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-			CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
-			nullptr, nullptr, WindowClass::GetInstance(), this
+		WindowClass::GetName(), name,
+		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+		CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
+		nullptr, nullptr, WindowClass::GetInstance(), this
 	);
 	// check for error
 	if (hWnd == nullptr)
 	{
-			throw WND_LAST_EXCEPT();
+		throw WND_LAST_EXCEPT();
 	}
 	// newly created  windows start off as hidden
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
 	// create graphics object
 	pGfx = std::make_unique<Graphics>(hWnd);
-}
+};
 
 Window::~Window()
 {
 	DestroyWindow(hWnd);
-}
+};
 
 void Window::SetTitle(const std::string& title)
 {
-		if(SetWindowText(hWnd, Utf8ToWide(title.c_str()).c_str()) == 0)
-		{
-				throw WND_LAST_EXCEPT();
-		}
-}
+	if (SetWindowText(hWnd, Utf8ToWide(title.c_str()).c_str()) == 0)
+	{
+		throw WND_LAST_EXCEPT();
+	}
+};
 
 std::optional<int> Window::ProcessMessages() {
 	MSG msg;
 	// while queue has message, remove add dispatch then
-	while(PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 	{
 		// check for quit because peekmessage does not signal quit via return value like getmessage
 		if (msg.message == WM_QUIT)
@@ -67,12 +68,16 @@ std::optional<int> Window::ProcessMessages() {
 	}
 	// return empty optional when not quitting app
 	return {};
-}
+};
 
 Graphics& Window::Gfx()
 {
+	if (!pGfx)
+	{
+		throw WND_NOGFX_EXCEPT();
+	}
 	return *pGfx;
-}
+};
 
 LRESULT WINAPI Window::HandleMsgSetup(
 	HWND hwnd,
@@ -95,7 +100,7 @@ LRESULT WINAPI Window::HandleMsgSetup(
 	}
 	// if we get a message before the WM_NCCREATE message, handle with default handler
 	return DefWindowProc(hwnd, msg, wParam, lParam);
-}
+};
 
 LRESULT WINAPI Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
@@ -112,27 +117,27 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	switch (msg)
 	{
 		case WM_CLOSE:
-				PostQuitMessage(69);
-				break;
+			PostQuitMessage(69);
+			break;
 		// clear keystate when window loses focus to prevent input getting "stuck"
 		case WM_KILLFOCUS:
-				kbd.ClearState();
-				break;
+			kbd.ClearState();
+			break;
 		/********************* KEYBOARD MESSAGES *********************/
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
-				if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled())
-				{
-						kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
-				}
-				break;
+			if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled())
+			{
+				kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
+			}
+			break;
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
-				kbd.OnKeyReleased(static_cast<unsigned char>(wParam));
-				break;
+			kbd.OnKeyReleased(static_cast<unsigned char>(wParam));
+			break;
 		case WM_CHAR:
-				kbd.OnChar(static_cast<unsigned char>(wParam));
-				break;
+			kbd.OnChar(static_cast<unsigned char>(wParam));
+			break;
 		/********************* END KEYBOARD MESSAGES *********************/
 
 		/********************* MOUSE MESSAGES *********************/
@@ -223,52 +228,52 @@ Window::WindowClass::WindowClass() noexcept
 	wc.lpszClassName = GetName();
 	wc.hIconSm = static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));;
 	RegisterClassEx(&wc);
-}
+};
 
 Window::WindowClass::~WindowClass()
 {
 	UnregisterClass(wndClassName, GetInstance());
-}
+};
 
 const wchar_t* Window::WindowClass::GetName() noexcept
 {
 	return wndClassName;
-}
+};
 
 HINSTANCE Window::WindowClass::GetInstance() noexcept
 {
 	return wndClass.hInst;
-}
+};
 
-// Window Exception Stuff
-Window::Exception::Exception(int line, const char* file, HRESULT hr) noexcept
-	: LYException(line, file), hr(hr)
-{}
+// Window HrException Stuff
+Window::HrException::HrException(int line, const char* file, HRESULT hr) noexcept
+	: Exception(line, file), hr(hr)
+{};
 
-const char* Window::Exception::what() const noexcept
+const char* Window::HrException::what() const noexcept
 {
 	std::ostringstream oss;
 	oss << GetType() << std::endl
-			<< "[Error Code] " << GetErrorCode() << std::endl
-			<< "[Description] " << GetErrorString() << std::endl
-			<< GetOriginString();
+		<< "[Error Code] " << GetErrorCode() << std::endl
+		<< "[Description] " << GetErrorDescription() << std::endl
+		<< GetOriginString();
 	whatBuffer = oss.str();
 	return whatBuffer.c_str();
-}
+};
 
-const char* Window::Exception::GetType() const noexcept
+const char* Window::HrException::GetType() const noexcept
 {
 	return "LYException";
-}
+};
 
 std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 {
 	char* pMsgBuf = nullptr;
 	DWORD nMsgLen = FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(wchar_t*)reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(wchar_t*)reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
 	);
 	if (nMsgLen == 0)
 	{
@@ -277,14 +282,21 @@ std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 	std::string errorString = pMsgBuf;
 	LocalFree(pMsgBuf);
 	return errorString;
-}
+};
 
-HRESULT Window::Exception::GetErrorCode() const noexcept
+HRESULT Window::HrException::GetErrorCode() const noexcept
 {
 	return hr;
-}
+};
 
-std::string Window::Exception::GetErrorString() const noexcept
+std::string Window::HrException::GetErrorDescription() const noexcept
 {
-	return TranslateErrorCode(hr);
-}
+	char buf[512];
+	DXGetErrorDescriptionA(hr, buf, sizeof(buf));
+	return buf;
+};
+
+const char* Window::NoGfxException::GetType() const noexcept
+{
+	return "No Graphics Exception";
+};

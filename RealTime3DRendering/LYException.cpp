@@ -36,7 +36,7 @@ std::string LYException::GetOriginString() const noexcept
 {
     std::ostringstream oss;
     oss << "[File] " << file << std::endl
-        << "[Line] " << line;
+        << "[Line] " << line << std::endl;
 
     return oss.str();
 }

@@ -3,9 +3,9 @@
 // ==============================
 // 1. Target Windows Version (Game Standard)
 // ==============================
-#define _WIN32_WINNT 0x0A00     // Targeting Windows 10 and above
-#define WINVER       0x0A00     // Same as _WIN32_WINNT
-#define NTDDI_VERSION NTDDI_WIN10 // Detailed Windows 10 version
+//#define _WIN32_WINNT 0x0A00     // Targeting Windows 10 and above
+//#define WINVER       0x0A00     // Same as _WIN32_WINNT
+//#define NTDDI_VERSION NTDDI_WIN10 // Detailed Windows 10 version
 
 #include <SDKDDKVer.h>
 
@@ -30,7 +30,7 @@
 // ==============================
 // 3. Safety & Encoding Settings
 // ==============================
-#define STRICT                  // Enable strict type-checking for HWND/HDC handles
+//#define STRICT                  // Enable strict type-checking for HWND/HDC handles
 
 // ==============================
 // 4. Include Main Windows Header
