@@ -3,7 +3,7 @@
 
 App::App()
 	:
-	wnd(800, 300, L"Real Time 3D Rendering")
+	wnd(800, 600, L"Real Time 3D Rendering")
 {
 }
 

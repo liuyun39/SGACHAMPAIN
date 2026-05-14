@@ -1,7 +1,6 @@
 #include "Window.h"
 #include "utils.h";
 #include "App.h"
-// 强制 DirectX 调试层返回英文错误信息
 int CALLBACK WinMain(
 	HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,

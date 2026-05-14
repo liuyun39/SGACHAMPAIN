@@ -2,6 +2,8 @@
 #include "dxerr.h"
 #include <sstream>
 
+namespace wrl = Microsoft::WRL;
+
 #pragma comment(lib, "d3d11.lib")
 
 #define GFX_EXCEPT_NOINFO(hr) Graphics::HrException( __LINE__,__FILE__,(hr))
@@ -18,10 +20,6 @@
 #endif
 Graphics::Graphics(HWND hWnd)
 {
-	//RECT rc;
-	//GetClientRect(hWnd, &rc);
-	//UINT width = rc.right - rc.left;
-	//UINT height = rc.bottom - rc.top;
 	DXGI_SWAP_CHAIN_DESC sd = {};
 	sd.BufferCount = 1;
 	sd.BufferDesc.Width = 0;
@@ -35,7 +33,7 @@ Graphics::Graphics(HWND hWnd)
 	sd.SampleDesc.Count = 1;
 	sd.SampleDesc.Quality = 0;
 	sd.Windowed = TRUE;
-	sd.OutputWindow = (HWND)123;
+	sd.OutputWindow = hWnd;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	sd.Flags = 0;
 	UINT swapCreateFlags = 0;
@@ -59,32 +57,10 @@ Graphics::Graphics(HWND hWnd)
 		&pContext
 	));
 	
-
-	ID3D11Texture2D* pBackBuffer = nullptr;
-	GFX_THROW_INFO(pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&pBackBuffer));
-	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pRenderTargetView));
+	wrl::ComPtr<ID3D11Texture2D> pBackBuffer;
+	GFX_THROW_INFO(pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &pBackBuffer));
+	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pRenderTargetView));
 	pBackBuffer->Release();
-}
-
-Graphics::~Graphics()
-{
-	if (pRenderTargetView != nullptr)
-	{
-		pRenderTargetView->Release();
-	}
-
-	if (pContext != nullptr)
-	{
-		pContext->Release();
-	}
-	if (pSwapChain != nullptr)
-	{
-		pSwapChain->Release();
-	}
-	if (pDevice != nullptr)
-	{
-		pDevice->Release();
-	}
 }
 
 void Graphics::EndFrame()
@@ -109,7 +85,7 @@ void Graphics::EndFrame()
 void Graphics::ClearBuffer(float r, float g, float b) noexcept
 {
 	const float color[] = { r, g, b, 1.0f };
-	pContext->ClearRenderTargetView(pRenderTargetView, color);
+	pContext->ClearRenderTargetView(pRenderTargetView.Get(), color);
 }
 
 // Graphics exception stuff
