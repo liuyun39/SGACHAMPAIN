@@ -13,6 +13,7 @@ namespace wrl = Microsoft::WRL;
 #define GFX_EXCEPT(hr) Graphics::HrException( __LINE__,__FILE__,(hr), infoManager.GetMessages())
 #define GFX_THROW_INFO(hrcall) infoManager.Set(); if( FAILED( hr = (hrcall) ) ) throw GFX_EXCEPT(hr)
 #define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphics::DeviceRemovedException(__LINE__, __FILE__, (hr), infoManager.GetMessages())
+#define GFX_THROW_INFO_ONLY(call) infoManager.Set(); (call); { auto v = infoManager.GetMessages(); if(!v.empty()) throw Graphics::InfoException(__LINE__, __FILE__, v); }
 #else
 #define GFX_EXCEPT(hr) Graphics::HrException( __LINE__,__FILE__,(hr))
 #define GFX_THROW_INFO(hrcall) GFX_THROW_NOINFO(hrcall)
@@ -60,7 +61,6 @@ Graphics::Graphics(HWND hWnd)
 	wrl::ComPtr<ID3D11Texture2D> pBackBuffer;
 	GFX_THROW_INFO(pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &pBackBuffer));
 	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pRenderTargetView));
-	pBackBuffer->Release();
 }
 
 void Graphics::EndFrame()
@@ -86,6 +86,40 @@ void Graphics::ClearBuffer(float r, float g, float b) noexcept
 {
 	const float color[] = { r, g, b, 1.0f };
 	pContext->ClearRenderTargetView(pRenderTargetView.Get(), color);
+}
+
+void Graphics::DrawTestTriangle()
+{
+	namespace wrl = Microsoft::WRL;
+	HRESULT hr;
+	struct Vertex
+	{
+		float x;
+		float y;
+	};
+	const Vertex vertices[] =
+	{
+		{ 0.0f, 0.5f },
+		{ 0.5f, -0.5f },
+		{ -0.5f, -0.5f }
+	};
+	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
+	D3D11_BUFFER_DESC bd = {};
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.CPUAccessFlags = 0u;
+	bd.MiscFlags = 0u;
+	bd.ByteWidth = sizeof(vertices);
+	bd.StructureByteStride = sizeof(Vertex);
+
+	D3D11_SUBRESOURCE_DATA sd = {};
+	sd.pSysMem = vertices;
+	GFX_THROW_INFO(pDevice->CreateBuffer(&bd, &sd, &pVertexBuffer));
+	// Bind vertex buffer to pipeline and draw
+	const UINT stride = sizeof(Vertex);
+	const UINT offset = 0u;
+	pContext->IASetVertexBuffers(0u, 1u, &pVertexBuffer, &stride, &offset);
+	pContext->Draw(3u, 0u);
 }
 
 // Graphics exception stuff
