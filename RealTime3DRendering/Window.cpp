@@ -51,7 +51,7 @@ void Window::SetTitle(const std::string& title)
 	}
 };
 
-std::optional<int> Window::ProcessMessages() {
+std::optional<WPARAM> Window::ProcessMessages() {
 	MSG msg;
 	// while queue has message, remove add dispatch then
 	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))

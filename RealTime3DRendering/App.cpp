@@ -13,7 +13,7 @@ int App::Go()
 	{
 		if (const auto exitCode = wnd.ProcessMessages())
 		{
-			return *exitCode;
+			return static_cast<int>(*exitCode);
 		}
 		DoFrame();
 	}

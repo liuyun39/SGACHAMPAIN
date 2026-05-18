@@ -1,5 +1,5 @@
 #include "Window.h"
-#include "utils.h";
+#include "utils.h"
 #include "App.h"
 int CALLBACK WinMain(
 	HINSTANCE hInstance,
@@ -24,4 +24,5 @@ int CALLBACK WinMain(
 	{
 		MessageBox(nullptr, L"NO details available", L"Unknown Exception", MB_OK | MB_ICONERROR);
 	}
+	return 1;  // default quit code is 0, but we're returning 1 to indicate an error in case we get here by some unexpected path
 }
