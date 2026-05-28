@@ -4,10 +4,14 @@ struct VSOUT
     float4 pos: SV_POSITION;
 };
 
+cbuffer CBuf
+{
+    row_major matrix transformation;
+};
 VSOUT main(float2 pos : Position, float3 color : Color)
 {
     VSOUT vso;
-    vso.pos = float4(pos.x, pos.y, 0.0f, 1.0f);
+    vso.pos = mul(float4(pos.x, pos.y, 0.0f, 1.0f), transformation);
     vso.color = color;
     return vso;
 }

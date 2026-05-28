@@ -90,7 +90,7 @@ void Graphics::ClearBuffer(float r, float g, float b) noexcept
 	pContext->ClearRenderTargetView(pRenderTargetView.Get(), color);
 }
 
-void Graphics::DrawTestTriangle()
+void Graphics::DrawTestTriangle(float angle)
 {
 	namespace wrl = Microsoft::WRL;
 	HRESULT hr;
@@ -116,11 +116,12 @@ void Graphics::DrawTestTriangle()
 			{ -0.5f,-0.5f,0,0,255,0 },
 			{ -0.3f,0.3f,0,255,0,0 },
 			{ 0.3f,0.3f,0,0,255,0 },
-			{ 0.0f,-1.8f,255,0,0,0 },
+			{ 0.0f,-1.0f,255,0,0,0 },
 	};
 	vertices[0].color.g = 255;
 	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
-	wrl::ComPtr<ID3DBlob> pBlob;
+	wrl::ComPtr<ID3DBlob> pVsBlob;
+	wrl::ComPtr<ID3DBlob> pPsBlob;
 
 	// 1. create vertex buffer
 	D3D11_BUFFER_DESC bd = {};
@@ -159,13 +160,48 @@ void Graphics::DrawTestTriangle()
 	// Bind index buffer to pipeline
 	pContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
 
+
+
+	// create constant buffer for transform matrices (not used in this test, but required by shader)
+	struct ConstantBuffer
+	{
+			struct
+			{
+				float element[4][4];
+			} transformation;
+	};
+	const ConstantBuffer cb =
+	{
+
+			{
+				(3.0f / 4.0f) * std::cos(angle),				std::sin(angle),		0.0f,		0.0f,
+				(3.0f / 4.0f) * -std::sin(angle),				std::cos(angle),		0.0f,		0.0f,
+				0.0f,																		0.0f,								1.0f,		0.0f,
+				0.0f,																		0.0f,								0.0f,		1.0f
+			}
+
+	};
+	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;
+	D3D11_BUFFER_DESC cbd = {};
+	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbd.Usage = D3D11_USAGE_DYNAMIC;
+	cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbd.MiscFlags = 0u;
+	cbd.ByteWidth = sizeof(cb);
+	cbd.StructureByteStride = 0u;
+	D3D11_SUBRESOURCE_DATA csd = {};
+	csd.pSysMem = &cb;
+	GFX_THROW_INFO(pDevice->CreateBuffer(&cbd, &csd, &pConstantBuffer));
+	// bind constant buffer to vertex shader (register b0)
+	pContext->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
+
 	// Bind vertex buffer to pipeline
 	const UINT stride = sizeof(Vertex);
 	const UINT offset = 0u;
 	pContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offset);
 
 	// 2. read compiled shader from file and create shader objects
-	GFX_THROW_INFO(D3DReadFileToBlob(L"VertexShader.cso", &pBlob));
+	GFX_THROW_INFO(D3DReadFileToBlob(L"VertexShader.cso", &pVsBlob));
 
 	// 3. create input (vertex) layout (2d position only)
 	wrl::ComPtr<ID3D11InputLayout> pInputLayout;
@@ -176,21 +212,21 @@ void Graphics::DrawTestTriangle()
 	};
 	GFX_THROW_INFO(pDevice->CreateInputLayout(
 		ied, (UINT)std::size(ied),
-		pBlob->GetBufferPointer(),
-		pBlob->GetBufferSize(),
+		pVsBlob->GetBufferPointer(),
+		pVsBlob->GetBufferSize(),
 		&pInputLayout
 	));
 	pContext->IASetInputLayout(pInputLayout.Get());
 
 	// 4. create vertex shader and set it to pipeline
 	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
-	GFX_THROW_INFO(pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader));
+	GFX_THROW_INFO(pDevice->CreateVertexShader(pVsBlob->GetBufferPointer(), pVsBlob->GetBufferSize(), nullptr, &pVertexShader));
 	pContext->VSSetShader(pVertexShader.Get(), nullptr, 0);
 
 	// 5. create pixel shader and set it to pipeline
 	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
-	GFX_THROW_INFO(D3DReadFileToBlob(L"PixelShader.cso", &pBlob));
-	GFX_THROW_INFO(pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShader));
+	GFX_THROW_INFO(D3DReadFileToBlob(L"PixelShader.cso", &pPsBlob));
+	GFX_THROW_INFO(pDevice->CreatePixelShader(pPsBlob->GetBufferPointer(), pPsBlob->GetBufferSize(), nullptr, &pPixelShader));
 	pContext->PSSetShader(pPixelShader.Get(), nullptr, 0);
 
 	// 6. set render target and draw
@@ -199,12 +235,12 @@ void Graphics::DrawTestTriangle()
 	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	// configure viewport
 	D3D11_VIEWPORT vp;
-	vp.Width = 400.0f;
-	vp.Height = 300.0f;
+	vp.Width = 800.0f;
+	vp.Height = 600.0f;
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
-	vp.TopLeftX = 100.0f;
-	vp.TopLeftY = 100.0f;
+	vp.TopLeftX = 0.0f;
+	vp.TopLeftY = 0.0f;
 	pContext->RSSetViewports(1u, &vp);
 
 	// 7. draw 
