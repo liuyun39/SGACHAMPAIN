@@ -16,6 +16,15 @@
     <Filter Include="Shader">
       <UniqueIdentifier>{246d1777-aa74-4aad-9f9d-e38850a50ef5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Macros">
+      <UniqueIdentifier>{7f10e460-3e39-4751-94a3-2dd7f8799bfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Drawable">
+      <UniqueIdentifier>{3328f610-b129-42d2-870e-4bd09febd9ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Bindable">
+      <UniqueIdentifier>{0b06f173-bc1d-4733-9101-eb928f25fc9a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinMain.cpp">
@@ -91,6 +100,12 @@
     </ClInclude>
     <ClInclude Include="DxgiInfoManager.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsThrowMacros.h">
+      <Filter>头文件\Macros</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowsThrowMacros.h">
+      <Filter>头文件\Macros</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

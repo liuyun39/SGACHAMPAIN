@@ -4,6 +4,7 @@
 #include "resource.h"
 #include "utils.h"
 #include "dxerr.h"
+#include "WindowsThrowMacros.h"
 
 // Window Stuff
 Window::Window(int width, int height, const WCHAR* name) :
@@ -174,6 +175,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		{
 			const POINTS pt = MAKEPOINTS(lParam);
 			mouse.OnLeftPressed(pt.x, pt.y);
+			//SetForegroundWindow(hWnd);
 			break;
 		}
 		case WM_LBUTTONUP:

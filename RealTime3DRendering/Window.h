@@ -68,12 +68,3 @@ private:
 	HWND hWnd;
 	std::unique_ptr<Graphics> pGfx;
 };
-
-
-// error exception helper macro
-#define WND_EXCEPT(hr) Window::HrException(__LINE__, __FILE__, hr)
-#define WND_LAST_EXCEPT() Window::HrException(__LINE__, __FILE__, GetLastError())
-#define WND_NOGFX_EXCEPT() Window::NoGfxException(__LINE__, __FILE__)
-
-#define GFX_EXCEPT_NOINFO(hr) Graphics::HrException( __LINE__,__FILE__,(hr) )
-#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw Graphics::HrException( __LINE__,__FILE__,hr )
