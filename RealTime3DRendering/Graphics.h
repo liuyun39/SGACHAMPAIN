@@ -2,12 +2,19 @@
 #include "AppCore.h"
 #include <d3d11.h>
 #include "LYException.h"
-#include "DxgiInfoManager.h"
 #include <vector>
 #include <wrl.h>
+#include "DxgiInfoManager.h"
+
+#include <d3dcompiler.h>
+#include <DirectXMath.h>
+#include <memory>
+#include <random>
+#include "ConditionalNoexcept.h"
 
 class Graphics
 {
+	friend class Bindable;
 public:
 	class Exception :public LYException
 	{
@@ -55,8 +62,11 @@ public:
 	~Graphics() = default;
 	void EndFrame();
 	void ClearBuffer(float r, float g, float b) noexcept;
-	void DrawTestTriangle(float angle, float x, float z);
+	void DrawIndexed(UINT count) noexcept(!IS_DEBUG);
+	void SetProjection(DirectX::FXMMATRIX proj) noexcept;
+	DirectX::XMMATRIX GetProjection() const noexcept;
 private:
+	DirectX::XMMATRIX projection;
 #ifndef NODEBUG
 	DxgiInfoManager infoManager;
 #endif
