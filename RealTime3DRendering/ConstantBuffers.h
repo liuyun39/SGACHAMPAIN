@@ -50,7 +50,7 @@ public:
 		GFX_THROW_INFO(GetDevice(gfx)->CreateBuffer(&cbd, nullptr, &pConstantBuffer));
 	}
 protected:
-	Microsoft::WRL::ComPtr<ID3D11Buffer> pConstantBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer> pConstantBuffer;
 };
 
 template<typename C>
