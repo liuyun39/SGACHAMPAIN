@@ -1,0 +1,12 @@
+﻿  Graphics.cpp
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\ChiliWin.h(23,9): warning C4005: '_WIN32_WINNT': macro redefinition
+  (compiling source file 'Graphics.cpp')
+      C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\SDKDDKVer.h(228,10):
+      see previous definition of '_WIN32_WINNT'
+  
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\ChiliWin.h(66,9): warning C4005: 'STRICT': macro redefinition
+  (compiling source file 'Graphics.cpp')
+      C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\minwindef.h(23,9):
+      see previous definition of 'STRICT'
+  
+  RealTime3DRendering.vcxproj -> D:\UE\3D_Real\SGACHAMPAIN\x64\Debug\RealTime3DRendering.exe

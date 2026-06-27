@@ -1,0 +1,65 @@
+﻿  App.cpp
+  dxerr.cpp
+  DxgiInfoManager.cpp
+  Graphics.cpp
+  Keyboard.cpp
+  LYException.cpp
+  Mouse.cpp
+  Timer.cpp
+  Window.cpp
+  WindowsMessageMap.cpp
+  WinMain.cpp
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\WinMain.cpp(2,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\utils.h(1,1): warning C4819: The file contains a character that cannot be represented in the current code page (936). Save the file in Unicode format to prevent data loss
+  (compiling source file 'WinMain.cpp')
+  
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\dxerr.cpp(139,10): warning C4005: 'CHK_ERRA_W': macro redefinition
+      D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\dxerr.cpp(69,10):
+      see previous definition of 'CHK_ERRA_W'
+  
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\dxerr.cpp(143,10): warning C4005: 'CHK_ERR_W': macro redefinition
+      D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\dxerr.cpp(65,10):
+      see previous definition of 'CHK_ERR_W'
+  
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\dxerr.cpp(147,10): warning C4005: 'CHK_ERRA_A': macro redefinition
+      D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\dxerr.cpp(77,10):
+      see previous definition of 'CHK_ERRA_A'
+  
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\dxerr.cpp(151,10): warning C4005: 'CHK_ERR_A': macro redefinition
+      D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\dxerr.cpp(73,10):
+      see previous definition of 'CHK_ERR_A'
+  
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\Graphics.cpp(47,2): error C2065: 'infoManager': undeclared identifier
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\Graphics.cpp(64,2): error C2065: 'infoManager': undeclared identifier
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\Graphics.cpp(65,2): error C2065: 'infoManager': undeclared identifier
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\Graphics.cpp(94,2): error C2065: 'infoManager': undeclared identifier
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\Graphics.cpp(100,10): error C2065: 'infoManager': undeclared identifier
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\Graphics.cpp(104,10): error C2065: 'infoManager': undeclared identifier
+D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\utils.h(1,1): warning C4819: The file contains a character that cannot be represented in the current code page (936). Save the file in Unicode format to prevent data loss
+  (compiling source file 'Window.cpp')
+  
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\optional(82,17): warning C4244: 'initializing': conversion from 'WPARAM' to 'int', possible loss of data
+  (compiling source file 'Window.cpp')
+      C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\optional(82,17):
+      the template instantiation context (the oldest one first) is
+          D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\Window.cpp(63,4):
+          see reference to function template instantiation 'std::optional<int>::optional<WPARAM&,0>(_Ty2) noexcept' being compiled
+          with
+          [
+              _Ty2=WPARAM &
+          ]
+              D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\Window.cpp(63,4):
+              see the first reference to 'std::optional<int>::optional' in 'Window::ProcessMessages'
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\optional(272,18):
+          see reference to function template instantiation 'std::_Optional_construct_base<_Ty>::_Optional_construct_base<WPARAM&>(std::in_place_t,WPARAM &)' being compiled
+          with
+          [
+              _Ty=int
+          ]
+          D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\Window.cpp(303,1):
+          see reference to function template instantiation 'std::_Optional_destruct_base<_Ty,true>::_Optional_destruct_base<WPARAM&>(std::in_place_t,WPARAM &) noexcept' being compiled
+          with
+          [
+              _Ty=int
+          ]
+  

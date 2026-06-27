@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>D:\UE\3D_Real\SGACHAMPAIN\x64\Debug\RealTime3DRendering.exe</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\ColorBlendPS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\ColorBlendVS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\ColorIndexPS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\ColorIndexVS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\TexturePS.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\UE\3D_Real\SGACHAMPAIN\RealTime3DRendering\TextureVS.cso</FullPath>
+    </ContentFile>
+  </ContentFiles>
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>
